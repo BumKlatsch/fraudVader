@@ -45,6 +45,9 @@ func main() {
 			"inc": func(value int) int {
 				return value + 1
 			},
+			"dec": func(value int) int {
+				return value - 1
+			},
 		}
 
 		tmpl, err := template.New("view.html").Funcs(funcs).ParseFiles("./view.html")
@@ -69,7 +72,7 @@ func main() {
 			log.Println(err)
 		}
 	})
-	r.Run(":8080")
+	r.Run("127.0.0.1:8080")
 }
 
 type MailData struct {

@@ -89,7 +89,7 @@
 </nav>
 <div class="container py-5">
     <div class="d-flex justify-content-between">
-        <h3>Mail Übersicht</h3>
+        <h3>Mail Übersicht - Seite {{ .Filter.Page }}</h3>
         <button class="btn btn-primary" x-on:click="flyout = !flyout">Filter & Suche</button>
     </div>
 
@@ -127,7 +127,12 @@
     </table>
     {{ $length := len .Mails }}
     {{ if gt $length 49 }}
-        <div class="mt-3 text-center">
+        <div class="mt-3 justify-content-center d-flex">
+            {{ if gt .Filter.Page 1}}
+            <div class="me-2">
+                <a href="/?page={{ dec .Filter.Page }}" class="btn btn-primary">Vorherige Seite</a>
+            </div>
+            {{ end }}
             <a href="/?page={{ inc .Filter.Page }}" class="btn btn-primary">Nächste Seite</a>
         </div>
     {{ end }}
