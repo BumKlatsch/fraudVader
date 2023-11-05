@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Orbitron">
 
     <style>
-        html {
+        html, body {
             height: 100%;
         }
 
@@ -28,7 +28,7 @@
         }
 
         .flyout {
-            position: absolute;
+            position: fixed;
             top: 0;
             right: 0;
             width: 400px;
@@ -40,9 +40,13 @@
         .logo {
             font-family: "Orbitron", sans-serif;
         }
+
+        .noscroll {
+            overflow-y: hidden;
+        }
     </style>
 </head>
-<body x-data="{ flyout: false }">
+<body x-data="{ flyout: false }" x-bind:class='{ "noscroll" : flyout }'>
 <div x-cloak>
     <div class="backdrop" x-show="flyout" x-on:click="flyout = false"></div>
     <div class="flyout p-3" x-show="flyout">
@@ -102,7 +106,7 @@
 
     {{ $length := len .Mails }}
     {{ if gt $length 0 }}
-    <table class="table mt-3">
+    <table class="table mt-5">
         <thead>
         <tr>
             <th scope="col">Absender</th>
