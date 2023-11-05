@@ -100,6 +100,8 @@
     </div>
     {{ end }}
 
+    {{ $length := len .Mails }}
+    {{ if gt $length 0 }}
     <table class="table mt-3">
         <thead>
         <tr>
@@ -133,16 +135,20 @@
        {{ end }}
         </tbody>
     </table>
-    {{ $length := len .Mails }}
-    {{ if gt $length 49 }}
-        <div class="mt-3 justify-content-center d-flex">
-            {{ if gt .Filter.Page 1}}
-            <div class="me-2">
-                <a href="/?page={{ dec .Filter.Page }}" class="btn btn-primary">Vorherige Seite</a>
+        {{ if gt $length 49 }}
+            <div class="mt-3 justify-content-center d-flex">
+                {{ if gt .Filter.Page 1}}
+                <div class="me-2">
+                    <a href="/?page={{ dec .Filter.Page }}" class="btn btn-primary">Vorherige Seite</a>
+                </div>
+                {{ end }}
+                <a href="/?page={{ inc .Filter.Page }}" class="btn btn-primary">Nächste Seite</a>
             </div>
-            {{ end }}
-            <a href="/?page={{ inc .Filter.Page }}" class="btn btn-primary">Nächste Seite</a>
-        </div>
+        {{ end }}
+    {{ else }}
+    <div class="alert alert-secondary my-5 text-center">
+        Ich konnte leider nichts finden. Bitte setze deine Filter und den Suchbegriff zurück und probiere es erneut.
+    </div>
     {{ end }}
 </div>
 
