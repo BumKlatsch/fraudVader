@@ -94,6 +94,12 @@
         <button class="btn btn-primary" x-on:click="flyout = !flyout">Filter & Suche</button>
     </div>
 
+    {{ if .Filter.Search }}
+    <div class="small mt-3">
+        Suche nach: {{ .Filter.Search }}
+    </div>
+    {{ end }}
+
     <table class="table mt-3">
         <thead>
         <tr>
@@ -156,7 +162,7 @@
                     <strong>Empfänger: </strong>
                     {{ if .To }}
                         {{ range .To }}
-                            {{ . }},
+                            <a href="/?search={{ . }}">{{ . }}</a>,
                         {{ end }}
                     {{ end }}
                 </div>
