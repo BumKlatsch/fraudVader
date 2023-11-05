@@ -106,13 +106,14 @@
         <tbody>
         {{ range .Mails }}
         <tr>
-            <td>{{ .From }}</td>
+            <td>
+                <a href="/?search={{ .From }}">{{ .From }}</a></td>
             <td>
                 {{ if .To }}
                     {{ $length := len .To }}
-                    {{ index .To 0 }}
+                        <a href="/?search={{ index .To 0 }}">{{ index .To 0 }}</a>
                     {{ if gt $length 1 }}
-                        <span class="small text-danger"> (und weitere)</span>
+                        <span class="small text-danger"> (und {{ dec (len .To) }} weitere)</span>
                     {{ end }}
                 {{ end }}
             </td>
