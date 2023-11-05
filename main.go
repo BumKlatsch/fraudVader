@@ -81,7 +81,7 @@ type MailData struct {
 	Date       time.Time
 	From       string
 	To         []string
-	Subject    *string
+	Subject    string
 	Text       string
 	Terms      []string
 	TermsCount int
@@ -111,7 +111,8 @@ func queryData(db *sql.DB, filter filterQuery) ([]MailData, error) {
 		var termsString string
 		var textString *string
 		var receivers string
-		var err = rows.Scan(&mail.MessageID, &dateString, &mail.From, &receivers, &mail.Subject, &textString, &termsString, &mail.TermsCount)
+		var subjectString *string
+		var err = rows.Scan(&mail.MessageID, &dateString, &mail.From, &receivers, &subjectString, &textString, &termsString, &mail.TermsCount)
 		if err != nil {
 			return nil, err
 		}
@@ -133,6 +134,10 @@ func queryData(db *sql.DB, filter filterQuery) ([]MailData, error) {
 			mail.Text = *textString
 			previewTextLen := math.Min(float64(len(mail.Text)), float64(lenOfPreviewText))
 			mail.Summary = mail.Text[:int(previewTextLen)]
+		}
+
+		if subjectString != nil {
+			mail.Subject = *subjectString
 		}
 
 		hash := sha256.Sum256([]byte(mail.MessageID))
