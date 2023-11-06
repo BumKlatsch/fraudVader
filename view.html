@@ -59,19 +59,19 @@
             </div>
 
             <div class="mt-4">
-                <label for="dt_start" class="form-label">Datum von:</label>
-                <input id="dt_start" name="dt_start" type="datetime-local" class="form-control">
+                <label for="start" class="form-label">Datum von:</label>
+                <input id="start" name="start" type="date" class="form-control" value="{{ .Filter.Start }}">
             </div>
 
             <div class="mt-4">
-                <label for="dt_end" class="form-label">Datum bis:</label>
-                <input id="dt_end" name="dt_end" type="datetime-local" class="form-control">
+                <label for="end" class="form-label">Datum bis:</label>
+                <input id="end" name="end" type="date" value="{{ .Filter.End }}" class="form-control">
             </div>
 
             <div class="mt-4">
                 <label for="department" class="form-label">Abteilung:</label>
                 <select id="department" name="department" class="form-control">
-                    <option>-- bitte wählen --</option>
+                    <option value="">alle</option>
                     <option>Finanzen</option>
                 </select>
             </div>
@@ -98,9 +98,9 @@
         <button class="btn btn-primary" x-on:click="flyout = !flyout">Filter & Suche</button>
     </div>
 
-    {{ if .Filter.Search }}
+    {{ if .FilterInfoText }}
     <div class="small mt-3">
-        Suche nach: {{ .Filter.Search }}
+        {{ .FilterInfoText }}
     </div>
     {{ end }}
 

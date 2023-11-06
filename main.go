@@ -65,8 +65,9 @@ func main() {
 		}
 
 		err = tmpl.Execute(ctx.Writer, gin.H{
-			"Mails":  mails,
-			"Filter": filter,
+			"Mails":          mails,
+			"Filter":         filter,
+			"FilterInfoText": buildFilterInfoText(filter),
 		})
 		if err != nil {
 			log.Println(err)
@@ -178,4 +179,28 @@ func parseDate(s string) (time.Time, error) {
 	}
 
 	return time.Time{}, fmt.Errorf("cannot convert time %q", s)
+}
+
+func buildFilterInfoText(f filterQuery) string {
+	parts := make([]string, 0)
+
+	if f.Search != "" {
+		parts = append(parts, "Suche nach: "+f.Search)
+	}
+
+	if f.Start != "" {
+		t, err := time.Parse("2006-01-02", f.Start)
+		if err == nil {
+			parts = append(parts, "von: "+t.Format("02.01.2006"))
+		}
+	}
+
+	if f.End != "" {
+		t, err := time.Parse("2006-01-02", f.End)
+		if err == nil {
+			parts = append(parts, "bis: "+t.Format("02.01.2006"))
+		}
+	}
+
+	return strings.Join(parts, " | ")
 }
