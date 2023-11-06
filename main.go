@@ -155,10 +155,10 @@ func queryData(db *sql.DB, filter filterQuery) ([]MailData, error) {
 func buildQueryConditions(filter filterQuery) string {
 	var added []string
 	if filter.Start != "" {
-		// added = append(added, fmt.Sprintf("date > %s", filter.Start))
+		added = append(added, fmt.Sprintf("date > '%s'", filter.Start))
 	}
 	if filter.End != "" {
-		// added = append(added, fmt.Sprintf("date < %s", filter.End))
+		added = append(added, fmt.Sprintf("date < '%s'", filter.End))
 	}
 	if filter.Search != "" {
 		added = append(added, fmt.Sprintf("(text like '%%%s%%' OR `to` like '%%%s%%' OR `from` like '%%%s%%')", filter.Search, filter.Search, filter.Search))
