@@ -208,7 +208,10 @@ func queryGraphData(db *sql.DB, filter filterQuery) ([]time.Time, error) {
 }
 
 func buildQueryConditions(filter filterQuery) string {
-	var added []string
+	added := []string{
+		"terms_count > 0",
+	}
+
 	if filter.Start != "" {
 		added = append(added, fmt.Sprintf("date > '%s'", filter.Start))
 	}
