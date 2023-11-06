@@ -19,10 +19,11 @@ import (
 const lenOfPreviewText = 60
 
 type filterQuery struct {
-	Search string `form:"search"`
-	Start  string `form:"start"`
-	End    string `form:"end"`
-	Page   int    `form:"page"`
+	Search  string `form:"search"`
+	Start   string `form:"start"`
+	End     string `form:"end"`
+	Page    int    `form:"page"`
+	isFraud bool
 }
 
 func main() {
@@ -42,6 +43,7 @@ func main() {
 		if filter.Page == 0 {
 			filter.Page = 1
 		}
+		filter.isFraud = true
 
 		funcs := template.FuncMap{
 			"inc": func(value int) int {
@@ -97,8 +99,10 @@ func main() {
 }
 
 type GraphData struct {
-	Weekdays [7]int `json:"weekdays"`
-	Hours    [4]int `json:"hours"`
+	Weekdays      [7]int `json:"weekdays"`
+	WeekdaysFraud [7]int `json:"weekdays_fraud"`
+	Hours         [4]int `json:"hours"`
+	HoursFraud    [4]int `json:"hours_fraud"`
 }
 
 type MailData struct {
@@ -176,23 +180,27 @@ func queryData(db *sql.DB, filter filterQuery) ([]MailData, error) {
 	return output, nil
 }
 
-func queryGraphData(db *sql.DB, filter filterQuery) ([]time.Time, error) {
+func queryGraphData(db *sql.DB, filter filterQuery) (map[bool][]time.Time, error) {
 	filterAddOns := buildQueryConditions(filter)
 	whereCondition := ""
 	if filterAddOns != "" {
 		whereCondition = "where " + filterAddOns
 	}
 
-	query := "select `date` from mails " + whereCondition
+	query := "select `date`, terms_count > 0 from mails " + whereCondition
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
 	}
 
-	var output []time.Time
+	output := map[bool][]time.Time{
+		false: {},
+		true:  {},
+	}
 	for rows.Next() {
 		var dateString string
-		err = rows.Scan(&dateString)
+		var isFraud bool
+		err = rows.Scan(&dateString, &isFraud)
 		if err != nil {
 			return nil, err
 		}
@@ -201,17 +209,18 @@ func queryGraphData(db *sql.DB, filter filterQuery) ([]time.Time, error) {
 			return nil, err
 		}
 
-		output = append(output, t)
+		output[isFraud] = append(output[isFraud], t)
 	}
 
 	return output, nil
 }
 
 func buildQueryConditions(filter filterQuery) string {
-	added := []string{
-		"terms_count > 0",
-	}
+	var added []string
 
+	if filter.isFraud {
+		added = append(added, "terms_count > 0")
+	}
 	if filter.Start != "" {
 		added = append(added, fmt.Sprintf("date > '%s'", filter.Start))
 	}
@@ -249,48 +258,71 @@ func buildFilterInfoText(f filterQuery) string {
 	return strings.Join(parts, " | ")
 }
 
-func createGraphDataFromMails(dates []time.Time) GraphData {
+func createGraphDataFromMails(data map[bool][]time.Time) GraphData {
 	weekdays := make(map[time.Weekday]int, 0)
+	weekdaysFraud := make(map[time.Weekday]int, 0)
 	hours := make(map[int]int, 0)
-	for _, date := range dates {
-		weekday := date.Weekday()
-		if _, ok := weekdays[weekday]; !ok {
-			weekdays[weekday] = 0
-		}
-		weekdays[weekday] += 1
+	hoursFraud := make(map[int]int, 0)
 
-		hour := date.Hour()
-		if _, ok := hours[hour]; !ok {
-			hours[hour] = 0
+	for isFraud, dates := range data {
+		for _, date := range dates {
+			weekday := date.Weekday()
+			if _, ok := weekdays[weekday]; !ok {
+				weekdays[weekday] = 0
+			}
+			if isFraud {
+				weekdaysFraud[weekday] += 1
+			} else {
+				weekdays[weekday] += 1
+			}
+
+			hour := date.Hour()
+			if _, ok := hours[hour]; !ok {
+				hours[hour] = 0
+			}
+			if isFraud {
+				hoursFraud[hour] += 1
+			} else {
+				hours[hour] += 1
+			}
 		}
-		hours[hour] += 1
 	}
 
 	var weekdaysOutput [7]int
+	var weekdaysOutputFraud [7]int
 	weekdaysOutput[6] = weekdays[time.Sunday]
+	weekdaysOutputFraud[6] = weekdaysFraud[time.Sunday]
 	for i := 1; i < 7; i++ {
 		// because we want to start at monday, we start a 1
 		weekdaysOutput[i-1] = weekdays[time.Weekday(i)]
+		weekdaysOutputFraud[i-1] = weekdaysFraud[time.Weekday(i)]
 	}
 
 	var hoursOutput [4]int
+	var hoursOutputFraud [4]int
 	for hour, value := range hours {
 		switch hour {
 		case 0, 1, 2, 3, 4, 5:
 			hoursOutput[0] += value
+			hoursOutputFraud[0] += value
 		case 6, 7, 8, 9, 10, 11:
 			hoursOutput[1] += value
+			hoursOutputFraud[1] += value
 		case 12, 13, 14, 15, 16, 17:
 			hoursOutput[2] += value
+			hoursOutputFraud[2] += value
 		case 18, 19, 20, 21, 22, 23:
 			hoursOutput[3] += value
+			hoursOutputFraud[3] += value
 		default:
 			panic("WHOOOPSIE. Hour is strange")
 		}
 	}
 
 	return GraphData{
-		Weekdays: weekdaysOutput,
-		Hours:    hoursOutput,
+		Weekdays:      weekdaysOutput,
+		WeekdaysFraud: weekdaysOutputFraud,
+		Hours:         hoursOutput,
+		HoursFraud:    hoursOutputFraud,
 	}
 }

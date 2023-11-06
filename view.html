@@ -227,18 +227,26 @@
             type: 'bar',
             data: {
                 labels: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'],
-                datasets: [{
+                datasets: [
+                    {
                     label: 'Mails pro Wochentag',
                     data: graphData.weekdays,
                     borderWidth: 1,
                     backgroundColor: '#76818d',
-                }]
+                },
+                    {
+                        label: 'Mails pro Wochentag (FRAUD)',
+                        data: graphData.weekdays_fraud,
+                        borderWidth: 1,
+                        backgroundColor: '#8d7676',
+                    },
+                ]
             },
             options: {
                 scales: {
                     y: {
-                        beginAtZero: true
-                    }
+                        beginAtZero: true,
+                    },
                 },
                 plugins: {
                     legend: {
