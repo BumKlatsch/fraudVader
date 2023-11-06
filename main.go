@@ -299,20 +299,31 @@ func createGraphDataFromMails(data map[bool][]time.Time) GraphData {
 	}
 
 	var hoursOutput [4]int
-	var hoursOutputFraud [4]int
 	for hour, value := range hours {
 		switch hour {
 		case 0, 1, 2, 3, 4, 5:
 			hoursOutput[0] += value
-			hoursOutputFraud[0] += value
 		case 6, 7, 8, 9, 10, 11:
 			hoursOutput[1] += value
-			hoursOutputFraud[1] += value
 		case 12, 13, 14, 15, 16, 17:
 			hoursOutput[2] += value
-			hoursOutputFraud[2] += value
 		case 18, 19, 20, 21, 22, 23:
 			hoursOutput[3] += value
+		default:
+			panic("WHOOOPSIE. Hour is strange")
+		}
+	}
+
+	var hoursOutputFraud [4]int
+	for hour, value := range hoursFraud {
+		switch hour {
+		case 0, 1, 2, 3, 4, 5:
+			hoursOutputFraud[0] += value
+		case 6, 7, 8, 9, 10, 11:
+			hoursOutputFraud[1] += value
+		case 12, 13, 14, 15, 16, 17:
+			hoursOutputFraud[2] += value
+		case 18, 19, 20, 21, 22, 23:
 			hoursOutputFraud[3] += value
 		default:
 			panic("WHOOOPSIE. Hour is strange")
