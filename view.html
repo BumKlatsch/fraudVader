@@ -97,7 +97,7 @@
 </nav>
 <div class="container py-5">
     <div class="d-flex justify-content-between">
-        <h3>Mail Übersicht - Seite {{ .Filter.Page }}</h3>
+        <h3>Fraud-verdächtige E-Mails</h3>
         <button class="btn btn-primary" x-on:click="flyout = !flyout">Filter & Suche</button>
     </div>
 
@@ -106,6 +106,17 @@
         {{ .FilterInfoText }}
     </div>
     {{ end }}
+
+    <div class="mt-5 d-flex">
+        <div class="w-100">
+            <h3>pro Woche</h3>
+            <canvas id="weekday-chart" class="mt-5"></canvas>
+        </div>
+        <div class="w-100">
+            <h3>pro Stunde</h3>
+            <canvas id="hour-chart" class="mt-5"></canvas>
+        </div>
+    </div>
 
     {{ $length := len .Mails }}
     {{ if gt $length 0 }}
@@ -200,13 +211,6 @@
 </div>
 {{ end }}
 
-<div>
-    <canvas id="weekday-chart"></canvas>
-</div>
-<div>
-    <canvas id="hour-chart"></canvas>
-</div>
-
 <script>
     window.onload = () => {
         loadGraphData()
@@ -226,7 +230,8 @@
                 datasets: [{
                     label: 'Mails pro Wochentag',
                     data: graphData.weekdays,
-                    borderWidth: 1
+                    borderWidth: 1,
+                    backgroundColor: '#76818d',
                 }]
             },
             options: {
@@ -234,25 +239,36 @@
                     y: {
                         beginAtZero: true
                     }
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    }
                 }
-            }
+            },
         });
 
         const ctx2 = document.getElementById('hour-chart');
         new Chart(ctx2, {
             type: 'bar',
             data: {
-                labels: ['0-5', '6-11', '12-17', '18-23'],
+                labels: ['0-5 Uhr', '6-11 Uhr', '12-17 Uhr', '18-23 Uhr'],
                 datasets: [{
                     label: 'Mails pro Stunde',
                     data: graphData.hours,
-                    borderWidth: 1
+                    borderWidth: 1,
+                    backgroundColor: '#76818d'
                 }]
             },
             options: {
                 scales: {
                     y: {
                         beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false,
                     }
                 }
             }
