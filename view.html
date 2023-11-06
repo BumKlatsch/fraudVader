@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        html {
+        html, body {
             height: 100%;
         }
 
@@ -30,7 +30,7 @@
         }
 
         .flyout {
-            position: absolute;
+            position: fixed;
             top: 0;
             right: 0;
             width: 400px;
@@ -42,8 +42,163 @@
         .logo {
             font-family: "Orbitron", sans-serif;
         }
+
+        .noscroll {
+            overflow-y: hidden;
+        }
     </style>
 </head>
+
+<body x-data="{ flyout: false }" x-bind:class='{ "noscroll" : flyout }'>
+<div x-cloak>
+    <div class="backdrop" x-show="flyout" x-on:click="flyout = false"></div>
+    <div class="flyout p-3" x-show="flyout">
+        <h4>Filter</h4>
+
+        <form method="get" action="/">
+            <div class="mt-4">
+                <label for="search" class="form-label">Suchbegriff:</label>
+                <input id="search" name="search" type="text" class="form-control" value="{{ .Filter.Search }}">
+            </div>
+
+            <div class="mt-4">
+                <label for="start" class="form-label">Datum von:</label>
+                <input id="start" name="start" type="date" class="form-control" value="{{ .Filter.Start }}">
+            </div>
+
+            <div class="mt-4">
+                <label for="end" class="form-label">Datum bis:</label>
+                <input id="end" name="end" type="date" value="{{ .Filter.End }}" class="form-control">
+            </div>
+
+            <div class="mt-4">
+                <label for="department" class="form-label">Abteilung:</label>
+                <select id="department" name="department" class="form-control">
+                    <option value="">alle</option>
+                    <option>Finanzen</option>
+                </select>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-center">
+                <a href="/" class="btn">Zurücksetzen</a>
+                <button type="submit" class="btn btn-primary" x-on:click="flyout = !flyout">Anwenden</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
+    <div class="text-center w-100">
+        <a class="navbar-brand logo" href="/">
+            <img style="width: 48px; height: 48px; margin-right: 8px;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAGXRFWHRDb21tZW50AENyZWF0ZWQgd2l0aCBHSU1QV4EOFwAADb9JREFUeNrVm3mUVvV5xz93ZliVEYWABhQBAeOKwagoJqHBBOoStx4VNTSBYqyK4hIbNU2MSxvTatuTaCW1xsSV1mgQMWKiUdMQT1yrEAERJRoQRREMy7B8+8d8xrzn7SzvOzBI7jn38HLv/T3b79mf38A2vpLskOS1JA1J1ns3+GyHbU1PXQczW4ijBzAUGAD0B3oBfwvM9dN9gRuAryZ5A3gdWACsBjYWRZE/KwEkqQMGA8cBRwH7i+sd4F2gBphbFMUcv8dnJwK7AB8DNgAvAo8kmQEsKopiI9vzlaQ2yYgkdyR5O8lvk1yd5KgkuybplqRXkneSjCxZN9JnvfxmV9dcLYy3hTkiSe32ynx9kmuSvJXk3iRjZKYo+65HKwLoUW5CwhgjzOXiqN/emO+f5OEk85Icm6RzK99WLICydZ2FPU9c/bcG7TVbgfndgLuBWmBcURQPFEXRsLWFXBRFQ1EUDwDjxHW3uD86ASTpBnwf2AiML4ri9Y7WNnGMF+f3pWHbC0DbPgs4AJhcFMXybWVy4pos7rPK/cy2svvBSZYkmVANAe31Ac1tgLiXJBm8TTXAUHQhMB+4pyMTlVa0IMA90nDhNg2PSYYkWZrkC+1Yu1U0oGTtF5IsSzJkm2iA6j4eeAV4fDuIwo9Ly/j2+IL2pMJdgS8CtxRFsa5MOJ2AenP+bsBK4PfAmmrTWNPp7sDuQE9gDbAEWFUUxYYSU1iX5C5gInAdsLajBbCfBc2DpVkgcAxwKnAw0BnYJPzVwP8kuRP4RQWMdwX+AjgdGAXsaMirBRqAp5PcDcwsimKVy2YB35S233a0ExxlpbY0SackJwCPAVfrkM4E9gH2AoYD5wPrgB8AM4HDgOZUtfDdTOA/XHM+cJCw9hH2AnE9luR4te4PPh+1LYqdO5J8z8LlJh3Qt5P0TVKXpGuSjyc5KMnhSfZP8rEkeyeZlmRFkrXNOMG1vpuW5BNJeifZz3cHCbOrOPomuUrcN0nL96StqmhQVCmALsCTwI+AQ63jzwGeteQdr/r2F/ZmtWwd8JQ7uwPwd2aO84U7DLgT+EfgA2CS2tC1BEb0J78A7rJUHmEmOlf4XwKOLIpifUd2c95IckySzybpZ0J0q5XaA0n+Jslwd73eb8YkudEduybJzhY3hXfnJD0tf99K8u+Ww/2E0SfJJ5NMTjJTXLckGeQ3n5WmN6rtKlWrAb20878EnrYw+RfgNeB6nd7+wM7u+hvAc8BLOrDPAD909zYAvxL0EUAn4EDgr4Ff6kj30wf0VxveE9YG4CKjzQXAQzrfWcCwoihWdFQU6KTQNujxr9e5zVd9d5G5dyR4DHCVgpgG/Nh/LwZulwmAnwBnAN8F5mgCk2V8kaq/TpM7267SPwHDgFuAqcDL0tapI53ggCTvJpmqOp+X5Fx/X6Fz6qSzrEvSJckeSS5K8kqS6Tq255MsTLIyyXv+ftZ305Mscs0ewqgTZidxXCHOc5NMMSudKm0DOqzBmeSCJPNl4Poko0Q+oTXv69phSV5Icl2S3ZKckeTIJEckGe+z6/xmWGtZncKYIO5RSW6QpvnSWHSEAHYUyUylP9Q21W3G4kpgjJXoPXReX/Tu57OlScZWCKuTuO9VYMuk7fkkO3aED/g80AdYATysHzgSOL40NW3jegJ43xDa3XCI/mON756osBrckORm4H4d7MP6jD7S+pOtlgna45tYEu9vBQaWtK4rvTYBq5wT/K/x/C5/9/DdpirgNUWTgdK0vzRObK0v2Z5U+AB3rUGP/xu9ch3QpQqCd3aXFgN7Aod77wm86rudq4DXRRrWSdN8YD1wiDRvuQB0bhOV9gHAbVaB81TZUytJP/UT5wBvm7ePMa6/5++FvjunEp8izlOlYZ403WYu8ZJaULs1fMDHaZzwPA7soc0h4quM3YOS/MyY/bbVW4zL3YzfZwJHK8yVwDLtHlV/pT7hFmDXJD9SyGtLYNXRODUaDIw19b5EWpC2yyyOjgOuNYdoXyZoOLkUOK2prAW+XhTF5pJd+Lw7O1xmN5rPb7KE7SEDc5oSnaIoNltXDPe7F4uiWJ+kBhgpU4epoatLYO2oENYCz1sHzC6KYpP01AD/YGbZQ//yndZadm0JoB74NfCMae/ooijmtqDeXfXAu4q8m/b4rja/Snyd9SU30zgLBLgDmCKMBgVWr3PbRVtfqzCWAcuBdc1FnyT7Wp4/ZLF0eEnfoGoTOFpCdrQKXNBSSNIbr06yuMQ57mk+f6z/7itz06zd5/jtOE3jfHd9rnb8kr9f09FtbNK+Vq4F1hg7SPvRakJ1GqCKzlTao+39z2zGETWNv4fJ5H42L4YY65eZp9fK6I221P4V+IQ0LAa+DPxUITyk2u+tRq2x71cqmPn8aXy+qYyuY9WwR4G+wDEtlcitacAIPepPZeKxMsYnAJ+W2QHu7Os6rlkSOc/CqBdwn23sWpl6WAYDzAD+3tr/bjXlBJOu3uJoEu5XxFeI73dJngFuLmHyUWleKw8jNOWqOj//aX3/Ynl+7cR2XpI/JrnUrk0vC5faMljdk9yT5Ikkoy1Y1phK3+g91GfL7SI94ZruzdDVRVwjxf1HYfYuqz2mSvsD8lJbTR4wQHVdbGIyvcyTNljnd7UOf6koihVFUawvVUc7u18DPgmcaym7UH9Rfm0EljpuO8c1XxNGk6/ZJI4VatjB+prf6WRLhybTpX2xvAyoSADu9JnGzyGawFtlTm+TKeebJkc3lA8phXMS8FWZ393a4VqZLb82+G6ssf5c157UzBmDbjQeqdnXLvBzzcBcpmntJS9nVlQl2q6ab4n5dpJPtfDdmCR/UK1fsTzuXPL+YOd2U5LslOQ3Se50qrSiGRNY4bvpSX5p9TlFGAeX1iXiWqgZPJtkUgs0HqJZ3SBPO1diAseVePZngRdakNVcY/r7trFOBi61TO1nqHtIb3yG6rpaR9fStdnU+Ajgr1z7EDDNkrmTidnJRo1XrB9aKsie9+4hT8e1KgCHEhOB2ebnP2zlsMNKQ+ReZoiTtfELzNCaUtveDlLfraLI+UBGdxLGSmFeII7J4hzo96+2kJ80WCV+zqgzUR5b1ICRNB5nW20ImdUKkRsNQ4N1OrMl8DLD1lk6pqkKalYVAnjQ2H+uGnaWMC8Tx2xxDhb2B63AmmUStVreRjabB+htJ1n0fNrsaVUbtf0SoH+SGvP7exXcCgujA1T/Lzs6q7QB8z5wDfBv0jFfM+sFzCrJBvvZcG1t7rhKGOPkbVKSJ5tmlaUaMFi1n2cKe3urRUQjEUtNaprgdLONfbn3t21xP9ZM9lmU3eWZ6Sxb798qgXeQOJqizG5GqM2t0BlrjYH6rTHy+icTsIqaoKT3UZ2XVLBTTVlejQRNccef0ZeME8c3re4OsRXeXdM4xHuqzy7y/4eVZIYnCusZYU8RV43+5Z02HCua6iOGzfnABHn+cOd2AU4Bfu7w4tYKx9mrJLwwxf2Usfdqd3CJxO1pkfKyo+77dXALvHfyWU+/WeCa9cKYJcwZ4qgV5w6Oy9NG/3CjzvAz8niKPFNXkrBskJBFVmmVXOtUyQIYJHGHCnwscIVzxC25viTzXYW5SVyLxb2uQji/lrd6eT0pybQaJyknK+WjDX2VAo1a1NXDCc8CVzogfQ64qyiKjVty68CesyK90t/fMQWuqUD9PzxIYcvsaHk9GehU5+7Vax+drdqqaUpuAI430TlKFV6iyp2U5M4KaviWstIatXOEkeRnts0fsVps0Bwqve4Dvi6v9UCBY6f7kmx0MlNTBYFfSfKyleE3mtYmqUlytsOK09pzgsvK7zRhnF0G+xtWeg8n+VY1Ak3yXXm9P0ldU+l4oWXlgVUSeV6SDUleTdK37F2d799Kckk1Jzotty9x7XmlFaHv+zo//CDJP1d5TnG4vF744TrHUr9PcnqlwBTclUk2Jbm8uXXu4okKaGZbx91Ljts/6JoTm/te3JeL+8eVapjrTpfXPcpV42IrrCFVqNPNNiMGtoF0Lwld5lGWoaVEy/hQ3y3z273aGJAOFPcjVcwmh8jjxf/P1O3c3JvkyUqOolv1/TzJf5WraCvfj04y2yHoD5zsjvL3Ut+NrnAwUifuhZWYl0f6n5TH7i191Eci5iTZp40dqLdWP71Kv9HF4y//ba2+XEaOshFbDazTk7xfgQbuK0+zk/RpC2hvGxeLnNt3aeG70TZE+rYzxNV5xmdQJRrUAoy+rR3ZVdjj5eXO0r5hJV54apI3DZGHlqqlUr02yYxK7a8jLs1qhrQUZc8PNdS9KS/dqgVeo+rcrprel+QET3N1154u4iO+dGi/kqae0nifNN8uDzVbgqDO/t5N2vyr2ux7SQ7fDgRwhGeNpkvbEmk9uL2m1VqM7p3kZMPfqiTDtwMBDJeWm6Wtd4f/7YBHVmckeTTJgR+FH9DOD5SGGeW9vm1BQD9NYbkETDI56bJFNte6T+oijknibAqh/doLt9hCojo7ezuFxnMCu9mhfcqBxdMOJRqs4ze31bwo6fbUWp3ubqXZ1GsYZCtutrPGF7bkz/SKrbU7lsZD7emPtH+3qx3bRTSOuN+0h7fSxmdT07XeZkxPGqe5/ewIDaZxNL/UXsNTtsMXAOvbW2ZvdQE05zDdvd1oHIHvbVOyvwz2lOH6ktba+wrmLTu9i535vawAGsrH4Fvj+j/jgAfURecB6QAAAABJRU5ErkJggg==">
+            Fraud Vader
+        </a>
+    </div>
+</nav>
+<div class="container py-5">
+    <div class="d-flex justify-content-between">
+        <h3>Mail Übersicht - Seite {{ .Filter.Page }}</h3>
+        <button class="btn btn-primary" x-on:click="flyout = !flyout">Filter & Suche</button>
+    </div>
+
+    {{ if .FilterInfoText }}
+    <div class="small mt-3">
+        {{ .FilterInfoText }}
+    </div>
+    {{ end }}
+
+    {{ $length := len .Mails }}
+    {{ if gt $length 0 }}
+    <table class="table mt-5">
+        <thead>
+        <tr>
+            <th scope="col">Absender</th>
+            <th scope="col">Empfänger</th>
+            <th scope="col">Betreff</th>
+            <th scope="col">Vorschau</th>
+            <th scope="col">Datum</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{ range .Mails }}
+        <tr>
+            <td>
+                <a href="/?search={{ .From }}">{{ .From }}</a></td>
+            <td>
+                {{ if .To }}
+                    {{ $length := len .To }}
+                        <a href="/?search={{ index .To 0 }}">{{ index .To 0 }}</a>
+                    {{ if gt $length 1 }}
+                        <span class="small text-danger"> (und {{ dec (len .To) }} weitere)</span>
+                    {{ end }}
+                {{ end }}
+            </td>
+            <td>{{ .Subject }}</td>
+            <td>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#details{{ .Hash }}">{{ .Summary }}</a>
+            </td>
+            <td>{{ .Date.Format "02.01.2006, 15:04:05" }} Uhr</td>
+        </tr>
+       {{ end }}
+        </tbody>
+    </table>
+        {{ if gt $length 49 }}
+            <div class="mt-3 justify-content-center d-flex">
+                {{ if gt .Filter.Page 1}}
+                <div class="me-2">
+                    <a href="/?page={{ dec .Filter.Page }}" class="btn btn-primary">Vorherige Seite</a>
+                </div>
+                {{ end }}
+                <a href="/?page={{ inc .Filter.Page }}" class="btn btn-primary">Nächste Seite</a>
+            </div>
+        {{ end }}
+    {{ else }}
+    <div class="alert alert-secondary my-5 text-center">
+        Ich konnte leider nichts finden. Bitte setze deine Filter und den Suchbegriff zurück und probiere es erneut.
+    </div>
+    {{ end }}
+</div>
+
+{{ range .Mails }}
+<div class="modal fade" id="details{{ .Hash }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">E-Mail Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <strong>Absender: </strong> {{ .From }}
+                </div>
+                <div>
+                    <strong>Empfänger: </strong>
+                    {{ if .To }}
+                        {{ range .To }}
+                            <a href="/?search={{ . }}">{{ . }}</a>,
+                        {{ end }}
+                    {{ end }}
+                </div>
+                <div>
+                    <strong>Betreff: </strong> {{ .Subject }}
+                </div>
+                <div>
+                    <strong>Datum:</strong> {{ .Date.Format "02.01.2006, 15:04:05" }} Uhr
+                </div>
+                <div class="mt-4">
+                    <strong>Inhalt</strong>
+                    <p class="mt-4">
+                        {{ .Text }}
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
 
 <div>
     <canvas id="weekday-chart"></canvas>
@@ -105,148 +260,7 @@
     }
 </script>
 
-<body x-data="{ flyout: false }">
-<div x-cloak>
-    <div class="backdrop" x-show="flyout" x-on:click="flyout = false"></div>
-    <div class="flyout p-3" x-show="flyout">
-        <h4>Filter</h4>
-
-        <form method="get" action="/">
-            <div class="mt-4">
-                <label for="search" class="form-label">Suchbegriff:</label>
-                <input id="search" name="search" type="text" class="form-control" value="{{ .Filter.Search }}">
-            </div>
-
-            <div class="mt-4">
-                <label for="dt_start" class="form-label">Datum von:</label>
-                <input id="dt_start" name="dt_start" type="datetime-local" class="form-control">
-            </div>
-
-            <div class="mt-4">
-                <label for="dt_end" class="form-label">Datum bis:</label>
-                <input id="dt_end" name="dt_end" type="datetime-local" class="form-control">
-            </div>
-
-            <div class="mt-4">
-                <label for="department" class="form-label">Abteilung:</label>
-                <select id="department" name="department" class="form-control">
-                    <option>-- bitte wählen --</option>
-                    <option>Finanzen</option>
-                </select>
-            </div>
-
-            <div class="mt-4 text-center">
-                <button type="submit" class="btn btn-primary" x-on:click="flyout = !flyout">Anwenden</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
-    <div class="text-center w-100">
-        <a class="navbar-brand logo" href="/">
-            <img style="width: 48px; height: 48px; margin-right: 8px;"
-                 src="data:image/png;base64,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">
-            Fraud Vader
-        </a>
-    </div>
-</nav>
-<div class="container py-5">
-    <div class="d-flex justify-content-between">
-        <h3>Mail Übersicht - Seite {{ .Filter.Page }}</h3>
-        <button class="btn btn-primary" x-on:click="flyout = !flyout">Filter & Suche</button>
-    </div>
-
-    <table class="table mt-3">
-        <thead>
-        <tr>
-            <th scope="col">Absender</th>
-            <th scope="col">Empfänger</th>
-            <th scope="col">Betreff</th>
-            <th scope="col">Vorschau</th>
-            <th scope="col">Datum</th>
-        </tr>
-        </thead>
-        <tbody>
-        {{ range .Mails }}
-        <tr>
-            <td>{{ .From }}</td>
-            <td>
-                {{ if .To }}
-                {{ $length := len .To }}
-                {{ index .To 0 }}
-                {{ if gt $length 1 }}
-                <span class="small text-danger"> (und weitere)</span>
-                {{ end }}
-                {{ end }}
-            </td>
-            <td>{{ .Subject }}</td>
-            <td>
-                <a href="#" data-bs-toggle="modal" data-bs-target="#details{{ .Hash }}">{{ .Summary }}</a>
-            </td>
-            <td>{{ .Date.Format "01.02.2006, 15:04:05" }} Uhr</td>
-        </tr>
-        {{ end }}
-        </tbody>
-    </table>
-    {{ $length := len .Mails }}
-    {{ if gt $length 49 }}
-    <div class="mt-3 justify-content-center d-flex">
-        {{ if gt .Filter.Page 1}}
-        <div class="me-2">
-            <a href="/?page={{ dec .Filter.Page }}" class="btn btn-primary">Vorherige Seite</a>
-        </div>
-        {{ end }}
-        <a href="/?page={{ inc .Filter.Page }}" class="btn btn-primary">Nächste Seite</a>
-    </div>
-    {{ end }}
-</div>
-
-{{ range .Mails }}
-<div class="modal fade" id="details{{ .Hash }}" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">E-Mail Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div>
-                    <strong>Absender: </strong> {{ .From }}
-                </div>
-                <div>
-                    <strong>Empfänger: </strong>
-                    {{ if .To }}
-                    {{ range .To }}
-                    {{ . }},
-                    {{ end }}
-                    {{ end }}
-                </div>
-                <div>
-                    <strong>Betreff: </strong> {{ .Subject }}
-                </div>
-                <div>
-                    <strong>Datum:</strong> {{ .Date.Format "01.02.2006, 15:04:05" }} Uhr
-                </div>
-                <div class="mt-4">
-                    <strong>Inhalt</strong>
-                    <p class="mt-4">
-                        {{ .Text }}
-                    </p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
-            </div>
-        </div>
-    </div>
-</div>
-{{ end }}
-
-
 <script src="//unpkg.com/alpinejs" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
-        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 </body>
 </html>

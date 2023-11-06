@@ -32,6 +32,7 @@ func main() {
 	}
 
 	r := gin.Default()
+	r.StaticFile("/favicon.ico", "favicon.ico")
 	r.GET("/", func(ctx *gin.Context) {
 		var filter filterQuery
 		err := ctx.ShouldBindQuery(&filter)
@@ -66,8 +67,9 @@ func main() {
 		}
 
 		err = tmpl.Execute(ctx.Writer, gin.H{
-			"Mails":  mails,
-			"Filter": filter,
+			"Mails":          mails,
+			"Filter":         filter,
+			"FilterInfoText": buildFilterInfoText(filter),
 		})
 		if err != nil {
 			log.Println(err)
@@ -105,7 +107,7 @@ type MailData struct {
 	Date       time.Time
 	From       string
 	To         []string
-	Subject    *string
+	Subject    string
 	Text       string
 	Terms      []string
 	TermsCount int
@@ -122,7 +124,7 @@ func queryData(db *sql.DB, filter filterQuery) ([]MailData, error) {
 		whereCondition = "where " + filterAddOns
 	}
 
-	query := fmt.Sprintf("select message_id, `date`, `from`, `to`, subject, text, terms, terms_count from mails %s limit %d offset %d", whereCondition, limit, offset)
+	query := fmt.Sprintf("select message_id, `date`, `from`, `to`, subject, text, terms, terms_count from mails %s order by date desc limit %d offset %d", whereCondition, limit, offset)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -135,7 +137,8 @@ func queryData(db *sql.DB, filter filterQuery) ([]MailData, error) {
 		var termsString string
 		var textString *string
 		var receivers string
-		var err = rows.Scan(&mail.MessageID, &dateString, &mail.From, &receivers, &mail.Subject, &textString, &termsString, &mail.TermsCount)
+		var subjectString *string
+		var err = rows.Scan(&mail.MessageID, &dateString, &mail.From, &receivers, &subjectString, &textString, &termsString, &mail.TermsCount)
 		if err != nil {
 			return nil, err
 		}
@@ -148,15 +151,21 @@ func queryData(db *sql.DB, filter filterQuery) ([]MailData, error) {
 			FindAllString(receivers, -1)
 		mail.To = foundMails
 
-		t, err := parseDate(dateString)
+		dateString = strings.ReplaceAll(dateString, "+00:00", "")
+		t, err := time.Parse("2006-01-02 15:04:05", dateString)
 		if err != nil {
 			return nil, err
 		}
 		mail.Date = t
+
 		if textString != nil {
 			mail.Text = *textString
 			previewTextLen := math.Min(float64(len(mail.Text)), float64(lenOfPreviewText))
 			mail.Summary = mail.Text[:int(previewTextLen)]
+		}
+
+		if subjectString != nil {
+			mail.Subject = *subjectString
 		}
 
 		hash := sha256.Sum256([]byte(mail.MessageID))
@@ -201,10 +210,10 @@ func queryGraphData(db *sql.DB, filter filterQuery) ([]time.Time, error) {
 func buildQueryConditions(filter filterQuery) string {
 	var added []string
 	if filter.Start != "" {
-		// added = append(added, fmt.Sprintf("date > %s", filter.Start))
+		added = append(added, fmt.Sprintf("date > '%s'", filter.Start))
 	}
 	if filter.End != "" {
-		// added = append(added, fmt.Sprintf("date < %s", filter.End))
+		added = append(added, fmt.Sprintf("date < '%s'", filter.End))
 	}
 	if filter.Search != "" {
 		added = append(added, fmt.Sprintf("(text like '%%%s%%' OR `to` like '%%%s%%' OR `from` like '%%%s%%')", filter.Search, filter.Search, filter.Search))
@@ -228,6 +237,30 @@ func parseDate(s string) (time.Time, error) {
 	}
 
 	return time.Time{}, fmt.Errorf("cannot convert time %q", s)
+}
+
+func buildFilterInfoText(f filterQuery) string {
+	parts := make([]string, 0)
+
+	if f.Search != "" {
+		parts = append(parts, "Suche nach: "+f.Search)
+	}
+
+	if f.Start != "" {
+		t, err := time.Parse("2006-01-02", f.Start)
+		if err == nil {
+			parts = append(parts, "von: "+t.Format("02.01.2006"))
+		}
+	}
+
+	if f.End != "" {
+		t, err := time.Parse("2006-01-02", f.End)
+		if err == nil {
+			parts = append(parts, "bis: "+t.Format("02.01.2006"))
+		}
+	}
+
+	return strings.Join(parts, " | ")
 }
 
 func createGraphDataFromMails(dates []time.Time) GraphData {
