@@ -100,7 +100,7 @@ func queryData(db *sql.DB, filter filterQuery) ([]MailData, error) {
 		whereCondition = "where " + filterAddOns
 	}
 
-	query := fmt.Sprintf("select message_id, `date`, `from`, `to`, subject, text, terms, terms_count from mails %s limit %d offset %d", whereCondition, limit, offset)
+	query := fmt.Sprintf("select message_id, `date`, `from`, `to`, subject, text, terms, terms_count from mails %s order by date desc limit %d offset %d", whereCondition, limit, offset)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -127,11 +127,13 @@ func queryData(db *sql.DB, filter filterQuery) ([]MailData, error) {
 			FindAllString(receivers, -1)
 		mail.To = foundMails
 
-		t, err := parseDate(dateString)
+		dateString = strings.ReplaceAll(dateString, "+00:00", "")
+		t, err := time.Parse("2006-01-02 15:04:05", dateString)
 		if err != nil {
 			return nil, err
 		}
 		mail.Date = t
+
 		if textString != nil {
 			mail.Text = *textString
 			previewTextLen := math.Min(float64(len(mail.Text)), float64(lenOfPreviewText))
