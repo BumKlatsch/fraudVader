@@ -196,7 +196,7 @@ func queryGraphData(db *sql.DB, filter filterQuery) ([]time.Time, error) {
 		if err != nil {
 			return nil, err
 		}
-		t, err := parseDate(dateString)
+		t, err := time.Parse(time.DateTime+"+00:00", dateString)
 		if err != nil {
 			return nil, err
 		}
@@ -220,23 +220,6 @@ func buildQueryConditions(filter filterQuery) string {
 	}
 
 	return strings.Join(added, " AND ")
-}
-
-func parseDate(s string) (time.Time, error) {
-	layouts := []string{
-		"Mon, 02 Jan 2006 15:04:05 -0700 (MST)",
-		"Mon, 2 Jan 2006 15:04:05 -0700 (MST)",
-		"02 Jan 2006 15:04:05 -0700 (MST)",
-		"2 Jan 2006 15:04:05 -0700 (MST)",
-	}
-
-	for _, layout := range layouts {
-		if t, err := time.Parse(layout, s); err == nil {
-			return t, nil
-		}
-	}
-
-	return time.Time{}, fmt.Errorf("cannot convert time %q", s)
 }
 
 func buildFilterInfoText(f filterQuery) string {
