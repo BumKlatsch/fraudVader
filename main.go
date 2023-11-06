@@ -10,6 +10,7 @@ import (
 	"html/template"
 	"log"
 	"math"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -72,7 +73,30 @@ func main() {
 			log.Println(err)
 		}
 	})
+
+	r.GET("/graph-data", func(ctx *gin.Context) {
+		var filter filterQuery
+		err := ctx.ShouldBindQuery(&filter)
+		if err != nil {
+			// TODO: logging
+		}
+
+		dates, err := queryGraphData(db, filter)
+		if err != nil {
+			// TODO: do logging
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"data": createGraphDataFromMails(dates),
+		})
+
+	})
 	r.Run("127.0.0.1:8080")
+}
+
+type GraphData struct {
+	Weekdays [7]int `json:"weekdays"`
+	Hours    [4]int `json:"hours"`
 }
 
 type MailData struct {
@@ -143,6 +167,37 @@ func queryData(db *sql.DB, filter filterQuery) ([]MailData, error) {
 	return output, nil
 }
 
+func queryGraphData(db *sql.DB, filter filterQuery) ([]time.Time, error) {
+	filterAddOns := buildQueryConditions(filter)
+	whereCondition := ""
+	if filterAddOns != "" {
+		whereCondition = "where " + filterAddOns
+	}
+
+	query := "select `date` from mails " + whereCondition
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	var output []time.Time
+	for rows.Next() {
+		var dateString string
+		err = rows.Scan(&dateString)
+		if err != nil {
+			return nil, err
+		}
+		t, err := parseDate(dateString)
+		if err != nil {
+			return nil, err
+		}
+
+		output = append(output, t)
+	}
+
+	return output, nil
+}
+
 func buildQueryConditions(filter filterQuery) string {
 	var added []string
 	if filter.Start != "" {
@@ -173,4 +228,50 @@ func parseDate(s string) (time.Time, error) {
 	}
 
 	return time.Time{}, fmt.Errorf("cannot convert time %q", s)
+}
+
+func createGraphDataFromMails(dates []time.Time) GraphData {
+	weekdays := make(map[time.Weekday]int, 0)
+	hours := make(map[int]int, 0)
+	for _, date := range dates {
+		weekday := date.Weekday()
+		if _, ok := weekdays[weekday]; !ok {
+			weekdays[weekday] = 0
+		}
+		weekdays[weekday] += 1
+
+		hour := date.Hour()
+		if _, ok := hours[hour]; !ok {
+			hours[hour] = 0
+		}
+		hours[hour] += 1
+	}
+
+	var weekdaysOutput [7]int
+	weekdaysOutput[6] = weekdays[time.Sunday]
+	for i := 1; i < 7; i++ {
+		// because we want to start at monday, we start a 1
+		weekdaysOutput[i-1] = weekdays[time.Weekday(i)]
+	}
+
+	var hoursOutput [4]int
+	for hour, value := range hours {
+		switch hour {
+		case 0, 1, 2, 3, 4, 5:
+			hoursOutput[0] += value
+		case 6, 7, 8, 9, 10, 11:
+			hoursOutput[1] += value
+		case 12, 13, 14, 15, 16, 17:
+			hoursOutput[2] += value
+		case 18, 19, 20, 21, 22, 23:
+			hoursOutput[3] += value
+		default:
+			panic("WHOOOPSIE. Hour is strange")
+		}
+	}
+
+	return GraphData{
+		Weekdays: weekdaysOutput,
+		Hours:    hoursOutput,
+	}
 }
