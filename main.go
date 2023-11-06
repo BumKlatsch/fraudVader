@@ -31,6 +31,7 @@ func main() {
 	}
 
 	r := gin.Default()
+	r.StaticFile("/favicon.ico", "favicon.ico")
 	r.GET("/", func(ctx *gin.Context) {
 		var filter filterQuery
 		err := ctx.ShouldBindQuery(&filter)
